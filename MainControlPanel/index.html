@@ -1,0 +1,59 @@
+<html>
+	<head>
+		<title>Thermostat</title>
+	</head>
+	<body>
+		<form method='get' action='t' target='i'>
+			Setpoint: (F)
+			<input name='x' id='setTemp' style='width:3em'/>
+			<input type='submit'/>
+		</form>
+		<form method='get' action='m' target='i'>
+			Mode
+			<select name='x' id='mode'>
+				<option value='0'>Heat</option>
+				<option value='1'>Cool</option>
+				<option value='-1'>Off</option>
+			</select>
+			<input type='submit'/>
+		</form>
+		<form method='get' action='s' target='i'>
+			Source
+			<select name='x' id='source'>
+				<option value='0'>Local</option>
+				<option value='1'>Remote</option>
+			</select>
+			<input type='submit'/>
+		</form>
+		<form method='get' action='d' target='i'>
+			Override Remote Temp
+			<input name='x' id='remoteTemp' style='width:3em'/>
+			<input type='submit'/>
+		</form>
+		<div id='info'>
+			Temp: <span id='temp'></span>F<br/>
+			Active: <span id='active'></span><br/>
+			LastCycleChange: <span id='lastCycleChange'></span> / MIN_CYCLE_TIME_MS (ms ago)<br/>
+			LastRemoteTempSync: <span id='lastRemoteTempSync'></span> / REMOTE_TEMP_TIMEOUT (ms ago)<br/>
+			TriggerCount: <span id='triggerCount'></span> / TRIGGER_COUNT_THRESH<br/>
+			<button onclick='getInfo()'>Refresh</button>
+		</div>
+		<iframe name='i' id='i' style='display:none;' src='/i'></iframe>
+	</body>
+	<script>
+		function getInfo(){
+			fetch('i').then(response=>response.json()).then(data=>{
+				setTemp.value=data.setTemp;
+				mode.value=data.mode;
+				source.value=data.source;
+				remoteTemp.value=data.remoteTemp;
+				temp.innerHTML=data.temp;
+				active.innerHTML=data.active;
+				lastCycleChange.innerHTML=data.lastCycleChange;
+				lastRemoteTempSync.innerHTML=data.lastRemoteTempSync;
+				triggerCount.innerHTML=data.triggerCount;
+			});
+		}
+		getInfo();
+	</script>
+</html>
