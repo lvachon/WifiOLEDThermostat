@@ -168,7 +168,7 @@
 				<div class='statblock'>
 					<div class='statlabel'>Set Temp</div>
 					<input id='set_setTemp'/> F
-					<button onclick='setVal('t',set_setTemp.value)'>Save</button>
+					<button onclick='setVal(`t`,set_setTemp.value)'>Save</button>
 				</div>
 				<div class='statblock'>
 					<div class='statlabel'>Set Mode</div>
@@ -177,7 +177,7 @@
 						<option value='1'>Cool</option>
 						<option value='-1'>Off</option>
 					</select>
-					<button onclick='setVal('m',set_mode.value)'>Save</button>
+					<button onclick='setVal(`m`,set_mode.value)'>Save</button>
 				</div>
 				<div class='statblock'>
 					<div class='statlabel'>Set Source</div>
@@ -185,7 +185,7 @@
 						<option value='0'>Local</option>
 						<option value='1'>Remote</option>
 					</select>
-					<button onclick='setVal('s',set_source.value)'>Save</button>
+					<button onclick='setVal(`s`,set_source.value)'>Save</button>
 				</div>
 			</div>
 		</div>
