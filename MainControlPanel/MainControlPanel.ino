@@ -86,6 +86,7 @@ String targetString="";
 int historyDivide=0;
 
 float tempHist[SCREEN_WIDTH];
+boolean activeHist[SCREEN_WIDTH];
 int tempHistIndex=0;
 
 int buttonDownCount=0;
@@ -217,7 +218,6 @@ void handleGetInfo(){
   server.send(200,"text/json",s.c_str());
 }
 
-
 void setup(void) {
   prefs.begin("therm",false);
   pinMode(ROT_A,INPUT_PULLUP);
@@ -246,6 +246,7 @@ void setup(void) {
     delay(500);
     OLED.print(".");
   }
+  
   OLED.print("IP: ");
   OLED.println(WiFi.localIP());
   if (MDNS.begin("THERM")) {
@@ -304,6 +305,9 @@ void drawHist(){
     y2=SCREEN_HEIGHT-y2;
     if(!x){OLED.drawLine(x,y,x+1,y2,HueToColor(43960-43690*(tempHist[i]-minTemp)/(maxTemp-minTemp)));}
     OLED.drawLine(x+1,y2,x+1,SCREEN_HEIGHT,HueToColor(43960-43690*(tempHist[i]-minTemp)/(maxTemp-minTemp)));
+    if(activeHist[i2]){
+      OLED.drawPixel(x+1,SCREEN_HEIGHT,WHITE);
+    }
   }
   
 }
@@ -378,7 +382,8 @@ void hvacLogic(){
       lastCycleChange=myMillis();
       triggerCount=0;
     }
-    
+    //Protect against ESD induced events
+    float oSetTemp = setTemp;
     if(hvacMode==MODE_HEAT){
       digitalWrite(COOL_RELAY_PIN,false);
       digitalWrite(HEAT_RELAY_PIN,hvacActive);
@@ -391,9 +396,17 @@ void hvacLogic(){
       digitalWrite(COOL_RELAY_PIN,false);
       digitalWrite(HEAT_RELAY_PIN,false);
     }
+    delay(10);
+    setTemp=oSetTemp;
+    
     if(historyDivide==0){
       tempHist[tempHistIndex]=tempF;
+      activeHist[tempHistIndex]=hvacActive;
       tempHistIndex=(tempHistIndex+1)%SCREEN_WIDTH;
+      if (WiFi.status() != WL_CONNECTED){
+        WiFi.disconnect();
+        WiFi.reconnect();
+      }
     }
     historyDivide=(historyDivide+1)%HISTORY_DIV;
     
