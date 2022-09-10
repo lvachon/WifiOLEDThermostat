@@ -4,24 +4,27 @@
 			WifiOLED Thermostat
 		</title>
 		<script>
-			const baseURL = '/';
-			const hist = [];
+			const baseURL = 'http://192.168.1.116/';
+			let hist = [];
 			const maxHist = 1000;
+			const dataTimeout = 10000;
 			function getInfo(){
 				fetch(`${baseURL}i`).then(response=>response.json()).then(data=>{
-					hist.push(data);
+					hist.push({...data,datestamp:Math.floor(Date.now()/dataTimeout)*dataTimeout});
 					while(hist.length>maxHist){hist.shift();}
 					renderHist();
 					renderLive();
-					setTimeout(getInfo,10000);
-				});
+					setTimeout(getInfo,dataTimeout);
+					localStorage.setItem('hist',JSON.stringify(hist));
+				}).catch((e)=>{console.error(e);setTimeout(getInfo,dataTimeout);});
 			}
 			function renderHist(){
 				const data = hist[hist.length-1];
 				const ctx = canv.getContext('2d');
 				const {width,height} = canv;
 				const graphRect = {top:height*0,bottom:height*1,left:0,right:width,height:height*1.00,width};
-				
+
+
 				const maxTemp = hist.reduce((acc,{temp})=>{
 					if(temp>acc){return temp;}
 					return acc
@@ -30,6 +33,8 @@
 					if(temp<acc){return temp;}
 					return acc
 				},data.setTemp-0.51)-0.5;
+
+				const minTime = hist[0].datestamp;
 
 				const BGGrad = ctx.createLinearGradient(graphRect.left,graphRect.top,graphRect.left,graphRect.bottom);
 				BGGrad.addColorStop(1-(data.setTemp+1-minTemp)/(maxTemp-minTemp),'hsl(0deg 100% 95%)');
@@ -45,10 +50,11 @@
 				LineGrad.addColorStop(1-(data.setTemp-1-minTemp)/(maxTemp-minTemp),'hsl(240deg 50% 50%)');
 				ctx.strokeStyle=LineGrad;
 				ctx.fillStyle=LineGrad;
+
 				ctx.beginPath();
-				ctx.moveTo(graphRect.right-hist.length,graphRect.bottom);
+				ctx.moveTo(graphRect.right-(Date.now()-minTime)/dataTimeout,graphRect.bottom);
 				for(i=0;i<hist.length;i++){
-					const x = graphRect.right-hist.length+i;
+					const x = graphRect.right-(Date.now()-hist[i].datestamp)/dataTimeout;
 					const y = graphRect.bottom - graphRect.height*(hist[i].temp-minTemp)/(maxTemp-minTemp);
 					ctx.lineTo(x,y);
 					
@@ -57,27 +63,24 @@
 				ctx.lineWidth=1;
 				ctx.stroke();
 				ctx.fill();
-
 				ctx.fillStyle='#FFFFFF';
-				for(i=0;i<hist.length;i++){
-					const x = graphRect.right-hist.length+i;
+				for(i=1;i<hist.length;i++){
+					const x = graphRect.right-(Date.now()-hist[i-1].datestamp)/dataTimeout;
+					const x1 = graphRect.right-(Date.now()-hist[i].datestamp)/dataTimeout;
 					if(hist[i].active){
-						ctx.fillRect(x-1,graphRect.bottom-5,2,5);
+						ctx.fillRect(x-1,graphRect.bottom-5,x1-x+1,5);
 					}
 				}
+
 				ctx.fillStyle=LineGrad;
-
-
-
-				ctx.font = '0.5cm sans-serif';
+				ctx.font = '0.75cm sans-serif';
 				let y = graphRect.bottom - graphRect.height*(data.setTemp-minTemp)/(maxTemp-minTemp);
 				ctx.beginPath();
 				ctx.moveTo(graphRect.left,y);
 				ctx.lineTo(graphRect.right,y);
 				ctx.strokeStyle='#000000';
-				ctx.lineWidth=2;
+				ctx.lineWidth=1.5;
 				ctx.stroke();
-				ctx.lineWidth=1;
 				ctx.fillStyle='#000000';
 				ctx.fillText(data.setTemp,graphRect.left,y-2);
 
@@ -86,10 +89,7 @@
 				ctx.moveTo(graphRect.left,y);
 				ctx.lineTo(graphRect.right,y);
 				ctx.strokeStyle='#FF0000';
-				ctx.lineWidth=2;
 				ctx.stroke();
-				ctx.lineWidth=1;
-				ctx.fillStyle='#000000';
 				ctx.fillText(data.setTemp+0.5,graphRect.left,y-2);
 
 				y = graphRect.bottom - graphRect.height*(data.setTemp-0.5-minTemp)/(maxTemp-minTemp);
@@ -97,11 +97,30 @@
 				ctx.moveTo(graphRect.left,y);
 				ctx.lineTo(graphRect.right,y);
 				ctx.strokeStyle='#0000FF';
-				ctx.lineWidth=2;
 				ctx.stroke();
-				ctx.lineWidth=1;
-				ctx.fillStyle='#000000';
 				ctx.fillText(data.setTemp-0.5,graphRect.left,y-2);
+
+				y = graphRect.bottom - graphRect.height*(data.temp-minTemp)/(maxTemp-minTemp);
+				ctx.beginPath();
+				ctx.moveTo(graphRect.left,y);
+				ctx.lineTo(graphRect.right,y);
+				ctx.strokeStyle='#444444';
+				ctx.stroke();
+				ctx.fillText(data.temp,graphRect.left,y-2);
+
+				ctx.font = '0.75cm sans-serif';
+				ctx.strokeStyle = '#444444';
+				ctx.lineWidth=1.5;
+				for(i=0;i<hist.length;i++){
+					if(!(hist[i].datestamp%(dataTimeout*180))){
+						const x = graphRect.right-(Date.now()-hist[i].datestamp)/dataTimeout;
+						ctx.beginPath();
+						ctx.moveTo(x,graphRect.bottom);
+						ctx.lineTo(x,graphRect.top);
+						ctx.stroke();
+						ctx.fillText(new Date(hist[i].datestamp).toLocaleTimeString(),x+2,graphRect.top+24);
+					}
+				}
 				
 			}
 			function renderLive(){
@@ -191,6 +210,8 @@
 		</div>
 	</body>
 	<script>
+		hist = JSON.parse(localStorage.getItem('hist','[]'));
+		if(!hist){hist=[];}
 		getInfo();
 	</script>
 </html>
