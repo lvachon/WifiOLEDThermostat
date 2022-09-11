@@ -182,6 +182,7 @@ void handleDowntemp(){
 void handleSetSource(){
   int x = server.arg("x").toInt();  
   tempSource=x;
+  prefs.putInt("tempSource",tempSource);
   handleGetInfo();
 }
 void handleSetTemp(){
@@ -255,6 +256,7 @@ void setup(void) {
   }
   setTemp=prefs.getFloat("setTemp",78.0);
   hvacMode=prefs.getInt("hvacMode",MODE_OFF);
+  tempSource=prefs.getInt("tempSource",LOCAL_TEMP);
   server.on("/", handleRoot);
   server.on("/d", handleDowntemp);
   server.on("/s", handleSetSource);

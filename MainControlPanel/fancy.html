@@ -12,6 +12,7 @@
 				fetch(`${baseURL}i`).then(response=>response.json()).then(data=>{
 					hist.push({...data,datestamp:Math.floor(Date.now()/dataTimeout)*dataTimeout});
 					while(hist.length>maxHist){hist.shift();}
+					hist = hist.filter(({datestamp})=>datestamp>Date.now()-maxHist*dataTimeout);
 					renderHist();
 					renderLive();
 					setTimeout(getInfo,dataTimeout);
