@@ -8,10 +8,11 @@
 			let hist = [];
 			const maxHist = 1000;
 			const dataTimeout = 10000;
-			const hyster = 0.25;
+			let hyster = 0.25;
 			function getInfo(){
 				fetch(`${baseURL}i`).then(response=>response.json()).then(data=>{
 					hist.push({...data,datestamp:Math.floor(Date.now()/dataTimeout)*dataTimeout});
+					hyster=data.hyster||0.250;
 					while(hist.length>maxHist){hist.shift();}
 					hist = hist.filter(({datestamp})=>datestamp>Date.now()-maxHist*dataTimeout);
 					renderHist();
