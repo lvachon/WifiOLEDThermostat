@@ -191,6 +191,12 @@ void handleSetTemp(){
   prefs.putFloat("setTemp",setTemp);
   handleGetInfo();
 }
+void handleHyster(){
+  float x = server.arg("x").toFloat();
+  hyster = x;
+  prefs.putFloat("hyster",hyster);
+  handleGetInfo();
+}
 void setHvacActive(boolean x){
   if(x!=hvacActive){
     lastCycleChange=myMillis();
@@ -215,7 +221,8 @@ void handleGetInfo(){
     "\"remoteTemp\":"+String(remoteTemp)+","+
     "\"lastRemoteTempSync\":"+String(myMillis()-lastRemoteTempSync)+","+
     "\"lastCycleChange\":"+String(myMillis()-lastCycleChange)+","+
-    "\"triggerCount\":"+String(triggerCount)+
+    "\"triggerCount\":"+String(triggerCount)+","+
+    "\"hyster\":"+String(hyster)+
     "}";
   server.send(200,"text/json",s.c_str());
 }
@@ -257,11 +264,13 @@ void setup(void) {
   setTemp=prefs.getFloat("setTemp",78.0);
   hvacMode=prefs.getInt("hvacMode",MODE_OFF);
   tempSource=prefs.getInt("tempSource",LOCAL_TEMP);
+  hyster=prefs.getFloat("hyster",0.25);
   server.on("/", handleRoot);
   server.on("/d", handleDowntemp);
   server.on("/s", handleSetSource);
   server.on("/t", handleSetTemp);
   server.on("/m", handleSetMode);
+  server.on("/h", handleHyster);
   server.on("/i", handleGetInfo);
   server.begin();
   htmlIndexPage.replace("REMOTE_TEMP_TIMEOUT",String(REMOTE_TEMP_TIMEOUT));

@@ -8,6 +8,7 @@
 			let hist = [];
 			const maxHist = 1000;
 			const dataTimeout = 10000;
+			const hyster = 0.25;
 			function getInfo(){
 				fetch(`${baseURL}i`).then(response=>response.json()).then(data=>{
 					hist.push({...data,datestamp:Math.floor(Date.now()/dataTimeout)*dataTimeout});
@@ -29,26 +30,26 @@
 				const maxTemp = hist.reduce((acc,{temp})=>{
 					if(temp>acc){return temp;}
 					return acc
-				},data.setTemp+0.51)+0.5;
+				},data.setTemp+hyster)+hyster;
 				const minTemp = hist.reduce((acc,{temp})=>{
 					if(temp<acc){return temp;}
 					return acc
-				},data.setTemp-0.51)-0.5;
+				},data.setTemp-hyster)-hyster;
 
 				const minTime = hist[0].datestamp;
 
 				const BGGrad = ctx.createLinearGradient(graphRect.left,graphRect.top,graphRect.left,graphRect.bottom);
-				BGGrad.addColorStop(1-(data.setTemp+1-minTemp)/(maxTemp-minTemp),'hsl(0deg 100% 95%)');
+				BGGrad.addColorStop(1-(data.setTemp+2*hyster-minTemp)/(maxTemp-minTemp),'hsl(0deg 100% 95%)');
 				BGGrad.addColorStop(1-(data.setTemp-minTemp)/(maxTemp-minTemp),'hsl(120deg 100% 95%)');
-				BGGrad.addColorStop(1-(data.setTemp-1-minTemp)/(maxTemp-minTemp),'hsl(240deg 100% 95%)');
+				BGGrad.addColorStop(1-(data.setTemp-2*hyster-minTemp)/(maxTemp-minTemp),'hsl(240deg 100% 95%)');
 				ctx.fillStyle=BGGrad;
 				ctx.fillRect(graphRect.left,graphRect.top,graphRect.width,graphRect.height);
 
 
 				const LineGrad = ctx.createLinearGradient(graphRect.left,graphRect.top,graphRect.left,graphRect.bottom);
-				LineGrad.addColorStop(1-(data.setTemp+1-minTemp)/(maxTemp-minTemp),'hsl(0deg 50% 50%)');
+				LineGrad.addColorStop(1-(data.setTemp+2*hyster-minTemp)/(maxTemp-minTemp),'hsl(0deg 50% 50%)');
 				LineGrad.addColorStop(1-(data.setTemp-minTemp)/(maxTemp-minTemp),'hsl(120deg 50% 50%)');
-				LineGrad.addColorStop(1-(data.setTemp-1-minTemp)/(maxTemp-minTemp),'hsl(240deg 50% 50%)');
+				LineGrad.addColorStop(1-(data.setTemp-2*hyster-minTemp)/(maxTemp-minTemp),'hsl(240deg 50% 50%)');
 				ctx.strokeStyle=LineGrad;
 				ctx.fillStyle=LineGrad;
 
@@ -85,21 +86,21 @@
 				ctx.fillStyle='#000000';
 				ctx.fillText(data.setTemp,graphRect.left,y-2);
 
-				y = graphRect.bottom - graphRect.height*(data.setTemp+0.5-minTemp)/(maxTemp-minTemp);
+				y = graphRect.bottom - graphRect.height*(data.setTemp+hyster-minTemp)/(maxTemp-minTemp);
 				ctx.beginPath();
 				ctx.moveTo(graphRect.left,y);
 				ctx.lineTo(graphRect.right,y);
 				ctx.strokeStyle='#FF0000';
 				ctx.stroke();
-				ctx.fillText(data.setTemp+0.5,graphRect.left,y-2);
+				ctx.fillText(data.setTemp+hyster,graphRect.left,y-2);
 
-				y = graphRect.bottom - graphRect.height*(data.setTemp-0.5-minTemp)/(maxTemp-minTemp);
+				y = graphRect.bottom - graphRect.height*(data.setTemp-hyster-minTemp)/(maxTemp-minTemp);
 				ctx.beginPath();
 				ctx.moveTo(graphRect.left,y);
 				ctx.lineTo(graphRect.right,y);
 				ctx.strokeStyle='#0000FF';
 				ctx.stroke();
-				ctx.fillText(data.setTemp-0.5,graphRect.left,y-2);
+				ctx.fillText(data.setTemp-hyster,graphRect.left,y-2);
 
 				y = graphRect.bottom - graphRect.height*(data.temp-minTemp)/(maxTemp-minTemp);
 				ctx.beginPath();
@@ -206,6 +207,11 @@
 						<option value='1'>Remote</option>
 					</select>
 					<button onclick='setVal(`s`,set_source.value)'>Save</button>
+				</div>
+				<div class='statblock'>
+					<div class='statlabel'>Tolerance</div>
+					<input id='set_hyster'/>F
+					<button onclick='setVal(`h`,set_hyster.value)'>Save</button>
 				</div>
 			</div>
 		</div>
